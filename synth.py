@@ -100,7 +100,6 @@ class synthesizer:
         self.release=release
         self.height=height
     
-
     def wavetable_generate(self, funct, dc=0.5, width=1):
         """
         Func:  wavetable_generate()
@@ -145,7 +144,6 @@ class synthesizer:
 
         return beat_comp
 
-
     def set_wavetable(self, wt):
         """
         Func:  set_wavetable()
@@ -153,27 +151,6 @@ class synthesizer:
                 Args: wt: wavetable
         """ 
         self.wtable = wt
-
-
-    def add_harmonic(self, synth_audio, harmonics):
-        """
-        Func: add_harmonic()
-            Objective: add a harmonic serie to the audio vector
-                Args: synth_audio: audio vector
-                      harmonics: vector with fundamental note and amplitude
-              return: cancatunation of audio file and harmonic serie
-        """ 
-        fundamental_freq = note_frequency(harmonics[0]) #get note freq
-        amplitude = harmonics[1]
-        self.wavetable_generate(np.sin) #generate sin wavetable
-        for i in range(1, 100): #create harmonic serie with N=100
-            freq=fundamental_freq*i
-            swav = amplitude*self.wavetable_synthesis(self.wtable, freq, self.fs, synth_audio.size/self.fs) 
-            amplitude/=1.2
-            synth_audio=np.add(swav, synth_audio)
-
-        return synth_audio
-
 
     def synthesize(self, composition):
         """
@@ -252,6 +229,12 @@ class synthesizer:
     
 
     def delay_t(self, composition, t_delay):
+        """
+            Objective: delay composition by t_delay seconds
+                args: composition: input composition
+                        t_delay: seconds
+                return: delayed version of composition
+        """
         delay_composition = list(composition).copy()
         for i in range(0, len(delay_composition)): # sum the start of note delay value
             delay_composition[i]= list(delay_composition[i])
@@ -275,6 +258,12 @@ class synthesizer:
         return new_comp
     
     def add_two_signal(self, signal1, signal2):
+        """
+            Objective: add two input signals
+                args: signal1: first signal
+                      signal2: seconds signal
+                return: concatetion of two signals
+        """
         if len(signal1) > len(signal2):
             sig1 = signal1.copy()
             sig2 = signal2.copy()
@@ -282,19 +271,21 @@ class synthesizer:
             sig1 = signal2.copy()
             sig2 = signal1.copy()
         
-        lenght_sig2 = len(sig2)
-        lenght_sig1 = len(sig1)
-        
-        for i in range(lenght_sig2, lenght_sig1):
-            sig2=np.append(sig2, 0)
+        list_zeros = np.zeros(len(sig1)-len(sig2))
+        sig2 = np.concatenate((sig2, list_zeros))
         
         finalsignal = np.add(sig1, sig2)
 
         return finalsignal
 
     def piano(self, composition, fs):
-
-        synth = np.zeros(int(fs*(composition[-1][3]+composition[-1][2]+0.5)), dtype=float) # 0.5s of tolerance
+        """
+            Objective: create piano pitch
+                 args: composition: input composition
+                                fs: sample rate
+                return: piano synthesized version
+        """
+        synth = np.zeros(int(fs*(float(composition[-1][3])+float(composition[-1][2])+0.5)), dtype=float) # 0.5s of tolerance
 
         for note, amplitude, duration, t_ini in composition:
             duration=float(duration)
