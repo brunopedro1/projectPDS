@@ -3,10 +3,23 @@ from IPython.display import Audio
 from matplotlib import pyplot as plt
 import librosa
 import librosa.display
-
+import math
 from scipy.signal import square 
 from scipy.signal import sawtooth 
 
+def note_octave_change(note, value):
+    """
+        change octave of a note depending on value
+            new octave = old octave + value
+    """
+    note = list(note)
+    for i in range(0, len(note)):
+        if note[i].isdigit():
+
+            note[i] = str(int(note[i])+value)
+            break;
+    
+    return "".join(note);
 def plot_audio(x, spectrogram=True):
     """
         plot_audio():
@@ -247,3 +260,54 @@ class synthesizer:
         delay_composition.insert(0,["C4",0,t_delay,0]) # insert delay on the start
         
         return delay_composition
+    
+    def octave_change(self, composition, change=1):
+        """
+         UP or DOWN the octave of a composition depending on change value
+            if change >0, increase the octave by its value
+            if change <0, decrease the octave bt its value
+        """
+        new_comp = list(composition).copy()
+        for i in range(0, len(new_comp)):
+            new_comp[i] = list(new_comp[i])
+            new_comp[i][0] = note_octave_change(new_comp[i][0], change)
+
+        return new_comp
+    
+    def add_two_signal(self, signal1, signal2):
+        if len(signal1) > len(signal2):
+            sig1 = signal1.copy()
+            sig2 = signal2.copy()
+        else:
+            sig1 = signal2.copy()
+            sig2 = signal1.copy()
+        
+        lenght_sig2 = len(sig2)
+        lenght_sig1 = len(sig1)
+        
+        for i in range(lenght_sig2, lenght_sig1):
+            sig2=np.append(sig2, 0)
+        
+        finalsignal = np.add(sig1, sig2)
+
+        return finalsignal
+
+    def piano(self, composition, fs):
+
+        synth = np.zeros(int(fs*(composition[-1][3]+composition[-1][2]+0.5)), dtype=float) # 0.5s of tolerance
+
+        for note, amplitude, duration, t_ini in composition:
+            duration=float(duration)
+            t_ini=float(t_ini)
+            amplitude = float(amplitude)
+            
+            if(len(note) ==3 ):
+                note = list(note)
+                note[1] = '#'
+
+            note_audio, _ =librosa.load('projectPDS/recordings/notes/{}.wav'.format("".join(note)),sr=fs)
+            for i in range(0, int((duration+0.05)*fs)):
+                synth[int(t_ini*fs)+i]+=amplitude*note_audio[i]
+
+        return synth
+    
